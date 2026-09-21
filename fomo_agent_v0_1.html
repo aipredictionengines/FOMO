@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FOMO Agent v0.1 — Paper Test Lab</title>
+  <style>
+    :root{
+      --bg:#0b0d12;
+      --panel:#121722;
+      --panel2:#181e2b;
+      --text:#eef2ff;
+      --muted:#9aa4b2;
+      --accent:#6ea8fe;
+      --good:#49d17d;
+      --warn:#f5c451;
+      --bad:#ff6b6b;
+      --border:#263043;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:linear-gradient(180deg,#080a0f 0%,#0d1119 100%);
+      color:var(--text);
+    }
+    .wrap{max-width:1400px;margin:0 auto;padding:20px}
+    h1,h2,h3{margin:0 0 12px}
+    p{color:var(--muted);line-height:1.55}
+    .top{
+      display:grid;
+      grid-template-columns:2fr 1fr;
+      gap:16px;
+      margin-bottom:16px;
+    }
+    .card{
+      background:rgba(18,23,34,.96);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:18px;
+      box-shadow:0 10px 30px rgba(0,0,0,.18);
+    }
+    .tag{
+      display:inline-block;padding:5px 9px;border-radius:999px;
+      background:#1c2940;color:#b9d2ff;font-size:12px;margin-right:6px
+    }
+    .grid{
+      display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:12px 0 18px;
+    }
+    .metric{
+      background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:14px
+    }
+    .metric .n{font-size:28px;font-weight:800}
+    .metric .l{color:var(--muted);font-size:12px}
+    .pipeline{
+      display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:12px
+    }
+    .step{
+      background:var(--panel2);border:1px solid var(--border);
+      border-radius:10px;padding:12px;font-size:13px;text-align:center
+    }
+    .form-grid{
+      display:grid;grid-template-columns:repeat(4,1fr);gap:10px
+    }
+    label{font-size:12px;color:var(--muted);display:block;margin-bottom:5px}
+    input,select,textarea{
+      width:100%;background:#0f1420;color:var(--text);border:1px solid var(--border);
+      border-radius:9px;padding:10px;outline:none
+    }
+    textarea{min-height:80px;resize:vertical}
+    .full{grid-column:1/-1}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+    button{
+      border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer
+    }
+    .primary{background:var(--accent);color:#08111e}
+    .secondary{background:#222b3a;color:var(--text);border:1px solid var(--border)}
+    .danger{background:#3a2024;color:#ffb1b1;border:1px solid #63343b}
+    table{
+      width:100%;border-collapse:collapse;font-size:12px;margin-top:14px
+    }
+    th,td{padding:9px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
+    th{color:#c8d2e1;background:#111827;position:sticky;top:0}
+    .table-wrap{overflow:auto;max-height:520px;border:1px solid var(--border);border-radius:12px}
+    .status{
+      display:inline-block;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:800
+    }
+    .watch{background:#332d17;color:#ffd76b}
+    .paper{background:#183522;color:#7df0a5}
+    .ignore{background:#3b2024;color:#ff9d9d}
+    .small{font-size:12px;color:var(--muted)}
+    .footer{margin:24px 0;color:var(--muted);font-size:12px;text-align:center}
+    .checklist{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+    .check{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px}
+    @media(max-width:950px){
+      .top,.grid,.pipeline,.form-grid,.checklist{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div class="card">
+      <span class="tag">02A — CRYPTO AGENT</span>
+      <span class="tag">FOMO / Social Alpha</span>
+      <h1 style="margin-top:10px">FOMO Agent v0.1 — Paper Test Lab</h1>
+      <p>
+        Цел: да проверим дали ранни social + on-chain сигнали дават измерим edge преди голямо движение.
+        Само PAPER TEST. Няма автоматично изпълнение и няма реални пари.
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>Правило на теста</h3>
+      <p><b>50 сигнала минимум</b> преди решение дали идеята си струва реални micro-tests.</p>
+      <div class="small">Decision Gate: PASS / MODIFY / KILL</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="metric"><div class="n" id="mSignals">0</div><div class="l">Записани сигнали</div></div>
+    <div class="metric"><div class="n" id="mWins">0</div><div class="l">Положителни 24h</div></div>
+    <div class="metric"><div class="n" id="mAvg">0%</div><div class="l">Средна 24h промяна</div></div>
+    <div class="metric"><div class="n" id="mProgress">0/50</div><div class="l">Paper Test прогрес</div></div>
+  </div>
+
+  <div class="card">
+    <h2>Agent Pipeline</h2>
+    <div class="pipeline">
+      <div class="step">1. Trader Scout</div>
+      <div class="step">2. Token Radar</div>
+      <div class="step">3. Momentum Engine</div>
+      <div class="step">4. On-chain / Wallet Check</div>
+      <div class="step">5. Risk Guard</div>
+      <div class="step">6. Signal Engine</div>
+    </div>
+    <p class="small">
+      Бъдещи ъпдейти: API connectors, wallet tracking, liquidity/holder checks, social velocity, automatic follow-up snapshots.
+    </p>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h2>Нов Paper Test</h2>
+
+    <div class="form-grid">
+      <div>
+        <label>Дата/час</label>
+        <input id="time" type="datetime-local">
+      </div>
+
+      <div>
+        <label>Token / Symbol</label>
+        <input id="token" placeholder="напр. NIULAI">
+      </div>
+
+      <div>
+        <label>Chain</label>
+        <select id="chain">
+          <option>Solana</option>
+          <option>Base</option>
+          <option>Ethereum</option>
+          <option>BNB Chain</option>
+          <option>Other</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Source</label>
+        <select id="source">
+          <option>Fomo Feed</option>
+          <option>Fomo Trader</option>
+          <option>X / Social</option>
+          <option>On-chain</option>
+          <option>Manual Research</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Market Cap при сигнал ($)</label>
+        <input id="mc" type="number" placeholder="10000">
+      </div>
+
+      <div>
+        <label>Liquidity ($)</label>
+        <input id="liq" type="number" placeholder="25000">
+      </div>
+
+      <div>
+        <label>Entry Price</label>
+        <input id="entry" type="number" step="any" placeholder="0.0001">
+      </div>
+
+      <div>
+        <label>Tracked traders count</label>
+        <input id="traders" type="number" placeholder="3">
+      </div>
+
+      <div>
+        <label>Social Score 0–100</label>
+        <input id="social" type="number" min="0" max="100" placeholder="70">
+      </div>
+
+      <div>
+        <label>On-chain Score 0–100</label>
+        <input id="onchain" type="number" min="0" max="100" placeholder="65">
+      </div>
+
+      <div>
+        <label>Risk Score 0–100</label>
+        <input id="risk" type="number" min="0" max="100" placeholder="55">
+      </div>
+
+      <div>
+        <label>FOMO Score 0–100</label>
+        <input id="fomo" type="number" min="0" max="100" placeholder="72">
+      </div>
+
+      <div>
+        <label>Signal</label>
+        <select id="signal">
+          <option>WATCH</option>
+          <option>PAPER TEST</option>
+          <option>IGNORE</option>
+        </select>
+      </div>
+
+      <div>
+        <label>5m %</label>
+        <input id="r5" type="number" step="any" placeholder="0">
+      </div>
+
+      <div>
+        <label>1h %</label>
+        <input id="r1h" type="number" step="any" placeholder="0">
+      </div>
+
+      <div>
+        <label>24h %</label>
+        <input id="r24" type="number" step="any" placeholder="0">
+      </div>
+
+      <div>
+        <label>Max Gain %</label>
+        <input id="maxgain" type="number" step="any" placeholder="0">
+      </div>
+
+      <div>
+        <label>Max Drawdown %</label>
+        <input id="maxdd" type="number" step="any" placeholder="0">
+      </div>
+
+      <div>
+        <label>Executable Exit %</label>
+        <input id="exec" type="number" step="any" placeholder="0">
+      </div>
+
+      <div>
+        <label>Result</label>
+        <select id="result">
+          <option>OPEN</option>
+          <option>WIN</option>
+          <option>LOSS</option>
+          <option>INVALID</option>
+        </select>
+      </div>
+
+      <div class="full">
+        <label>Бележки / Thesis</label>
+        <textarea id="notes" placeholder="Защо този token е интересен? Viral trigger, trader activity, wallet flow, liquidity risk..."></textarea>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="primary" onclick="addTest()">Добави Paper Test</button>
+      <button class="secondary" onclick="exportCSV()">Export CSV</button>
+      <button class="secondary" onclick="downloadJSON()">Backup JSON</button>
+      <button class="danger" onclick="clearAll()">Изчисти локалните данни</button>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h2>Pre-Signal Checklist</h2>
+    <div class="checklist">
+      <div class="check">☐ Има реален trigger / meme / social catalyst</div>
+      <div class="check">☐ Token contract е проверен</div>
+      <div class="check">☐ Liquidity е достатъчна за наблюдение</div>
+      <div class="check">☐ Holder concentration не е екстремна</div>
+      <div class="check">☐ Няма очевиден rug / honeypot warning</div>
+      <div class="check">☐ Не преследваме вече вертикален pump</div>
+      <div class="check">☐ Има поне 2 независими сигнала</div>
+      <div class="check">☐ Записан е изпълним, а не само theoretical exit</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h2>Paper Test Log</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>Time</th><th>Token</th><th>Chain</th><th>Source</th>
+            <th>MC</th><th>Liq</th><th>Traders</th><th>Social</th><th>On-chain</th>
+            <th>Risk</th><th>FOMO</th><th>Signal</th><th>5m%</th><th>1h%</th>
+            <th>24h%</th><th>Max%</th><th>DD%</th><th>Exec Exit%</th><th>Result</th><th>Notes</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h2>Decision Gate след 50 теста</h2>
+    <p>
+      PASS само ако имаме достатъчно последователен сигнал, приемлив drawdown, изпълнима ликвидност и резултатите
+      не зависят от 1–2 огромни outlier сделки. Ако не — MODIFY или KILL.
+    </p>
+  </div>
+
+  <div class="footer">
+    FOMO Agent v0.1 — Social Alpha Experiment • PAPER TEST ONLY • Local browser storage
+  </div>
+</div>
+
+<script>
+const KEY = "fomo_agent_v01_tests";
+let tests = JSON.parse(localStorage.getItem(KEY) || "[]");
+
+function v(id){ return document.getElementById(id).value; }
+function num(id){ const x=parseFloat(v(id)); return Number.isFinite(x)?x:0; }
+
+function addTest(){
+  const t = {
+    time:v("time") || new Date().toISOString().slice(0,16),
+    token:v("token").trim(),
+    chain:v("chain"),
+    source:v("source"),
+    mc:num("mc"),
+    liq:num("liq"),
+    entry:num("entry"),
+    traders:num("traders"),
+    social:num("social"),
+    onchain:num("onchain"),
+    risk:num("risk"),
+    fomo:num("fomo"),
+    signal:v("signal"),
+    r5:num("r5"),
+    r1h:num("r1h"),
+    r24:num("r24"),
+    maxgain:num("maxgain"),
+    maxdd:num("maxdd"),
+    exec:num("exec"),
+    result:v("result"),
+    notes:v("notes")
+  };
+  if(!t.token){ alert("Добави token/symbol."); return; }
+  tests.push(t);
+  localStorage.setItem(KEY, JSON.stringify(tests));
+  render();
+  document.getElementById("token").value="";
+  document.getElementById("notes").value="";
+}
+
+function render(){
+  const tb=document.getElementById("tbody");
+  tb.innerHTML="";
+  tests.forEach((t,i)=>{
+    const tr=document.createElement("tr");
+    let cls=t.signal==="PAPER TEST"?"paper":(t.signal==="IGNORE"?"ignore":"watch");
+    tr.innerHTML=`
+      <td>${i+1}</td><td>${esc(t.time)}</td><td><b>${esc(t.token)}</b></td><td>${esc(t.chain)}</td><td>${esc(t.source)}</td>
+      <td>${fmt(t.mc)}</td><td>${fmt(t.liq)}</td><td>${t.traders}</td><td>${t.social}</td><td>${t.onchain}</td>
+      <td>${t.risk}</td><td>${t.fomo}</td><td><span class="status ${cls}">${esc(t.signal)}</span></td>
+      <td>${pct(t.r5)}</td><td>${pct(t.r1h)}</td><td>${pct(t.r24)}</td><td>${pct(t.maxgain)}</td><td>${pct(t.maxdd)}</td>
+      <td>${pct(t.exec)}</td><td>${esc(t.result)}</td><td title="${esc(t.notes)}">${esc((t.notes||"").slice(0,45))}</td>`;
+    tb.appendChild(tr);
+  });
+
+  document.getElementById("mSignals").textContent=tests.length;
+  document.getElementById("mWins").textContent=tests.filter(x=>x.r24>0).length;
+  const avg=tests.length?tests.reduce((a,b)=>a+(b.r24||0),0)/tests.length:0;
+  document.getElementById("mAvg").textContent=avg.toFixed(1)+"%";
+  document.getElementById("mProgress").textContent=Math.min(tests.length,50)+"/50";
+}
+
+function esc(s){
+  return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]));
+}
+function fmt(n){ return Number(n||0).toLocaleString(); }
+function pct(n){ return (Number(n||0)).toFixed(1)+"%"; }
+
+function exportCSV(){
+  if(!tests.length){alert("Няма данни.");return;}
+  const headers=Object.keys(tests[0]);
+  const rows=[headers.join(",")];
+  tests.forEach(t=>{
+    rows.push(headers.map(h=>`"${String(t[h]??"").replaceAll('"','""')}"`).join(","));
+  });
+  dl("fomo-agent-paper-tests.csv", rows.join("\n"), "text/csv");
+}
+
+function downloadJSON(){
+  dl("fomo-agent-paper-tests.json", JSON.stringify(tests,null,2), "application/json");
+}
+
+function dl(name,content,type){
+  const b=new Blob([content],{type});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(b);a.download=name;a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function clearAll(){
+  if(confirm("Сигурен ли си? Това ще изтрие локалните Paper Test данни.")){
+    tests=[]; localStorage.removeItem(KEY); render();
+  }
+}
+
+render();
+</script>
+</body>
+</html>
